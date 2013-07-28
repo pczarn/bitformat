@@ -1,4 +1,4 @@
-module Bits
+module BitFormat
 
 class Bit < Field
    include NumericField

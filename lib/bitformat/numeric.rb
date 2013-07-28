@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
 require 'forwardable'
 
-module Bits
+module BitFormat
 
 FIXNUM_BITS = 0.size*8 - 2
 

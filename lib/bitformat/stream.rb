@@ -1,6 +1,4 @@
-#!/usr/bin/env ruby
-
-module Bits
+module BitFormat
 
 module Container
    attr_reader :endian

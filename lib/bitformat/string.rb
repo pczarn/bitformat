@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby
+require 'forwardable'
 
-module Bits
+module BitFormat
 
 module StringField
    extend Forwardable

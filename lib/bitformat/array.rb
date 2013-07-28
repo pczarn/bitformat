@@ -1,6 +1,4 @@
-#!/usr/bin/env ruby
-
-module Bits
+module BitFormat
 
 class Array < Field
    attr_reader :values

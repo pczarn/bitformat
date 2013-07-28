@@ -1,8 +1,6 @@
-#!/usr/bin/env ruby
-require 'stringio'
 require 'set'
 
-module Bits
+module BitFormat
 
 # endian constants for DSL
 NATIVE, LITTLE, BIG = *(0 .. 2)
