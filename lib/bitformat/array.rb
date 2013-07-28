@@ -2,14 +2,14 @@ module BitFormat
 
 class Array < Field
    attr_reader :values
-   
-	def initialize opts={}, &block
+
+   def initialize opts={}, &block
       super;
-      
+
       @size = nil
       @until = opts[:until]
       @length = opts[:length] if opts[:length].kind_of? Integer
-      
+
       if opt_type = opts[:type]
          # type is provided
          @type = Field.by_name(opt_type)
@@ -23,17 +23,17 @@ class Array < Field
 
       @values = ::Array.new(@length) { @type.new(endian: @endian, parent: @parent) } if @length
       @values ||= [] if @until
-	end
-   
+   end
+
    def initialize_copy obj
       # :nodoc:
       @values &&= @values.clone
    end
-   
+
    def read input
       input = StringIO.new(input) if input.kind_of? ::String
       @offset = input.pos
-      
+
       if @until
          @size = loop.inject(0) {|pos|
             @values << field = @type.new
@@ -68,13 +68,13 @@ class Array < Field
          el.write io
       }
    end
-   
+
    def assign obj
       @values.zip(obj) {|field, value|
          field.assign value
       }
    end
-   
+
    def inspect
       "#<Array #{ "@length=#@length, " if @length }#{ "@until=#@until, " if @until }#@values>"
    end

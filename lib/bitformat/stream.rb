@@ -2,8 +2,8 @@ module BitFormat
 
 module Container
    attr_reader :endian
-   
-	def fields; @fields ||= {} end
+
+   def fields; @fields ||= {} end
    def values; @values ||= [] end
    def labels; @labels ||= [] end
 
@@ -44,21 +44,21 @@ module Container
 
       # reader method
       define_method(label) {|| @values[num] }
-	end
+   end
 
    def endian type
       @endian = type
    end
-   
+
    def inherited by_class
       super;
       by_class.native_endian
    end
-	
-	def native_endian; @endian = NATIVE; end
-	def little_endian; @endian = LITTLE; end
-	def big_endian;    @endian = BIG;    end
-	alias network_endian big_endian
+
+   def native_endian; @endian = NATIVE; end
+   def little_endian; @endian = LITTLE; end
+   def big_endian;    @endian = BIG;    end
+   alias network_endian big_endian
 
    def self.extended by
       Field.register by
@@ -70,7 +70,7 @@ class Stream < Field
 
    attr_reader :values
 
-	def initialize opts={}, &extension
+   def initialize opts={}, &extension
       super;
 
       if block_given?
@@ -91,13 +91,13 @@ class Stream < Field
       # :nodoc:
       @values.map!(&:clone).each {|field| field.parent = self }
    end
-	
-	def read input
+
+   def read input
       if not self.if
          # this stream is excluded
          return @size = 0
       end
-      
+
       # wrap strings in stringIO
       input = StringIO.new(input) if input.kind_of? ::String
 
@@ -106,7 +106,7 @@ class Stream < Field
          field.read_io(input)
       }
       @size = input.pos - @offset
-	end
+   end
    alias_method :read_io, :read
 
    def assign ary
@@ -115,27 +115,27 @@ class Stream < Field
       }
       self
    end
-   
+
    def write io
       @values.each {|field|
          field.write io
       }
    end
-   
+
    def to_s
       io = StringIO.new
       write io
       io.string
    end
-	
-	def to_a
+
+   def to_a
       @values.clone
-	end
-	
-	def to_h
+   end
+
+   def to_h
       Hash[self.class.labels.zip(@values)]
-	end
-   
+   end
+
    def inspect
       "#<Stream #@values>"
    end

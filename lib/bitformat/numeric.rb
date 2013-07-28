@@ -8,8 +8,8 @@ module NumericField
    extend Forwardable
    methods = Fixnum.instance_methods - Object.instance_methods
    def_delegators :@value, *methods, :eql?, :==, :<=>, :hash, :to_s
-	
-	def read str
+
+   def read str
       if self.if
          str = str.sysread(size) if not str.kind_of?(::String)
          @value = str.unpack(format).first
@@ -17,15 +17,15 @@ module NumericField
       else
          0
       end
-	end
+   end
    alias_method :read_io, :read
-   
+
    def write io
       io.write [@value].pack(format)
    end
 
    def format; end
-   
+
    def inspect
       "#<#{ self.class.name } #@value>"
    end
@@ -94,11 +94,11 @@ end
       signed_fmt = fmt.split
       unsigned_fmt = fmt.upcase.split
    end
-	
+
    bits = size * 8
 
    define_numeric.call :"Int#{bits}", size, signed_fmt
-	define_numeric.call :"Uint#{bits}", size, unsigned_fmt
+   define_numeric.call :"Uint#{bits}", size, unsigned_fmt
 end
 
 define_numeric.call :Float, 4, %w(f e g)

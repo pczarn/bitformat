@@ -13,13 +13,13 @@ module StringField
 end
 
 class String < Field
-	include StringField
+   include StringField
 
    def initialize opts={}
       @match = opts[:match] if opts[:match]
       super;
    end
-   
+
    def read_io io
       if self.if
          @value = io.sysread(size)
@@ -31,7 +31,7 @@ class String < Field
 end
 
 class Stringz < Field
-	include StringField
+   include StringField
 
    def read_io io
       @value = io.readline(?\0)
@@ -39,7 +39,7 @@ class Stringz < Field
       raise EOFError if @value.slice!(-1) != ?\0
       @size = @value.size + 1
    end
-   
+
    def assign obj
       @value = obj
       @size = @value && @value.size + 1
@@ -47,14 +47,14 @@ class Stringz < Field
 end
 
 class Utf8 < Field
-	include StringField
-	
-	def format; "a#@size"; end
-	
-	def unpack str
-		str.force_encoding('UTF-8')
-	end
-   
+   include StringField
+
+   def format; "a#@size"; end
+
+   def unpack str
+      str.force_encoding('UTF-8')
+   end
+
    def read str
       str[0, size]
    end
@@ -62,7 +62,7 @@ end
 
 class Rest < Field
    include StringField
-   
+
    def read_io io
       @size = (@value = io.sysread).size
    end
