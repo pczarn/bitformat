@@ -86,8 +86,9 @@ class Stream < Field
       # deep clone
       @values = this_class.values.map(&:clone).each {|field| field.parent = self }
    end
-   
+
    def initialize_copy *_
+      # :nodoc:
       @values.map!(&:clone).each {|field| field.parent = self }
    end
 	

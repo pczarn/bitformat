@@ -26,6 +26,7 @@ class Array < Field
 	end
    
    def initialize_copy obj
+      # :nodoc:
       @values &&= @values.clone
    end
    
@@ -78,18 +79,22 @@ class Array < Field
       "#<Array #{ "@length=#@length, " if @length }#{ "@until=#@until, " if @until }#@values>"
    end
 
+   private
+
    def self.by_endian opts
       case opts[:until]
       when Proc
          # return memoized, modified self
          @@until_proc ||= dup.class_eval do
             alias_method :read_io, :read_io_until
+            public :read_io
             define_method(:length) { @values.length }
             self
          end
       when Symbol
          @@until_sym ||= dup.class_eval do
             alias_method :read_io, :read_io_until_sym
+            public :read_io
             define_method(:length) { @values.length }
             self
          end

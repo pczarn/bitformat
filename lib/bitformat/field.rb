@@ -53,15 +53,17 @@ class Field
 	def self.field_name
       name.split('::').last.gsub(/(?=[A-Z])(?<=.)/, ?_).downcase
 	end
-
-   def self.type_defined_in parent
-      parent.define_type field_name, self
-   end
 	
    # :field_class => FieldClass
 	@@fields = {}
 
 	@@containers = Set.new
+
+   private
+
+   def self.type_defined_in parent
+      parent.define_type field_name, self
+   end
 
 	def self.inherited field_class
       register_type(field_class) if field_class.name

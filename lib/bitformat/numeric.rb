@@ -31,7 +31,7 @@ module NumericField
    end
 end
 
-def self.define_numeric name, size, fmt
+define_numeric = proc do |name, size, fmt|
    fmt ||= ["a#{size}"]
 
    num = Class.new(Field) do
@@ -97,11 +97,11 @@ end
 	
    bits = size * 8
 
-   define_numeric :"Int#{bits}", size, signed_fmt
-	define_numeric :"Uint#{bits}", size, unsigned_fmt
+   define_numeric.call :"Int#{bits}", size, signed_fmt
+	define_numeric.call :"Uint#{bits}", size, unsigned_fmt
 end
 
-define_numeric :Float, 4, %w(f e g)
-define_numeric :Double, 8, %w(D E G)
+define_numeric.call :Float, 4, %w(f e g)
+define_numeric.call :Double, 8, %w(D E G)
 
 end
