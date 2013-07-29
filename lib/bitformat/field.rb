@@ -14,15 +14,16 @@ class Field
    attr_reader :offset, :value
    attr_accessor :size, :until, :length, :parent
 
+   # Takes common options: +endian+, +parent+ and +if+.
+   # Endian defaults to native.
+   #
    def initialize opts={}
       @endian = opts[:endian] || NATIVE
       @opt_if = opts[:if]
       @parent = opts[:parent]
    end
 
-   # always present
-   def if; true; end
-
+   # Assigns field's value to given object.
    def assign obj
       @value = obj
    end
@@ -44,22 +45,42 @@ class Field
       io.write @value
    end
 
-   def self.read *str
+   # Creates and returns an instance.
+   # Reads data from input.
+   #
+   def self.read input
       obj = new
-      obj.read(*str)
+      obj.read input
       obj
    end
 
+   # Returns the name of class as a symbol.
+   #
+   #  BitFormat::BitField.field_name  # => :bit_field
+   #
    def self.field_name
       name.split('::').last.gsub(/(?=[A-Z])(?<=.)/, ?_).downcase
    end
+
+   # Returns the class by its symbol. Inverse of ::field_name.
+   #
+   #  BitFormat::Field.by_name(:bit_field)  # => BitFormat::BitField
+   #
+   def self.by_name sym
+      @@fields[sym.to_sym]
+   end
+
+   protected
+
+   # Fields are present by default.
+   # This method is dynamically redefined by Container#define_field.
+   #
+   def if; true; end
 
    # :field_class => FieldClass
    @@fields = {}
 
    @@containers = Set.new
-
-   private
 
    def self.type_defined_in parent
       parent.define_type field_name, self
@@ -77,10 +98,6 @@ class Field
    def self.register container_class
       @@containers << container_class
       @@fields.each_value {|field| field.type_defined_in container_class }
-   end
-
-   def self.by_name sym
-      @@fields[sym.to_sym]
    end
 end
 

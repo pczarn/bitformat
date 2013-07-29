@@ -1,8 +1,15 @@
 module BitFormat
 
+# An array that holds several fields of the same type.
 class Array < Field
    attr_reader :values
 
+   # The constant number of elements can be set with +length+ option.
+   # The +until+ option can be used to read elements until a condition
+   # is true.
+   # If a block is provided, it extends a new subclass of Stream.
+   # Otherwise +type+ has to be specified.
+   #
    def initialize opts={}, &block
       super;
 
@@ -25,11 +32,15 @@ class Array < Field
       @values ||= [] if @until
    end
 
-   def initialize_copy obj
+   def initialize_copy _
       # :nodoc:
       @values &&= @values.clone
    end
 
+   # Takes a string or a readable object.
+   # Saves the position in bytes.
+   # Returns the number of bytes read.
+   #
    def read input
       input = StringIO.new(input) if input.kind_of? ::String
       @offset = input.pos

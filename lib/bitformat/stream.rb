@@ -1,8 +1,6 @@
 module BitFormat
 
 module Container
-   attr_reader :endian
-
    def fields; @fields ||= {} end
    def values; @values ||= [] end
    def labels; @labels ||= [] end
@@ -18,7 +16,7 @@ module Container
       end
    end
 
-    # Define an instance of field class
+   # Define an instance of field class
    def define_field field_class, label, opts={}, &extension
       raise "method #{self}##{label} already defined" if method_defined? label
 
@@ -46,6 +44,7 @@ module Container
       define_method(label) {|| @values[num] }
    end
 
+   # Sets endian inherited by subsequent fields.
    def endian type
       @endian = type
    end
@@ -65,11 +64,17 @@ module Container
    end
 end
 
+# A container for serialization of variable length fields.
+# 
+#
 class Stream < Field
    extend Container
 
    attr_reader :values
 
+   # Initializes fields.
+   # Optionally evaluates a block in the context of a singleton class.
+   #
    def initialize opts={}, &extension
       super;
 
@@ -87,11 +92,15 @@ class Stream < Field
       @values = this_class.values.map(&:clone).each {|field| field.parent = self }
    end
 
-   def initialize_copy *_
+   def initialize_copy _
       # :nodoc:
       @values.map!(&:clone).each {|field| field.parent = self }
    end
 
+   # Takes a string or a readable object.
+   # Saves the position in bytes.
+   # Returns the number of bytes read.
+   #
    def read input
       if not self.if
          # this stream is excluded
@@ -109,6 +118,7 @@ class Stream < Field
    end
    alias_method :read_io, :read
 
+   # Assigns values of each field.
    def assign ary
       @values.zip(ary).each {|field, obj|
          field.assign obj
@@ -116,22 +126,26 @@ class Stream < Field
       self
    end
 
+   # Takes a writable object.
    def write io
       @values.each {|field|
          field.write io
       }
    end
 
+   # Returns a binary string that represents the contents.
    def to_s
       io = StringIO.new
       write io
       io.string
    end
 
+   # Returns an array of fields.
    def to_a
       @values.clone
    end
 
+   # Returns a hash of fields and their labels.
    def to_h
       Hash[self.class.labels.zip(@values)]
    end

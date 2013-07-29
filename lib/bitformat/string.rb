@@ -20,6 +20,10 @@ class String < Field
       super;
    end
 
+
+   # Takes a readable object.
+   # Returns the number of bytes read.
+   #
    def read_io io
       if self.if
          @value = io.sysread(size)
@@ -33,6 +37,10 @@ end
 class Stringz < Field
    include StringField
 
+   # Takes a readable object.
+   # Consumes bytes until and including null.
+   # Returns the number of bytes read.
+   #
    def read_io io
       @value = io.readline(?\0)
       # removes last character and fails if it wasn't null
@@ -46,23 +54,13 @@ class Stringz < Field
    end
 end
 
-class Utf8 < Field
-   include StringField
-
-   def format; "a#@size"; end
-
-   def unpack str
-      str.force_encoding('UTF-8')
-   end
-
-   def read str
-      str[0, size]
-   end
-end
-
 class Rest < Field
    include StringField
 
+   # Takes a readable object.
+   # Consumes bytes until eof.
+   # Returns the number of bytes read.
+   #
    def read_io io
       @size = (@value = io.sysread).size
    end

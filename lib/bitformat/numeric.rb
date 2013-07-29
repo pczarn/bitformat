@@ -9,6 +9,8 @@ module NumericField
    methods = Fixnum.instance_methods - Object.instance_methods
    def_delegators :@value, *methods, :eql?, :==, :<=>, :hash, :to_s
 
+   # Unpacks a numeric from a string.
+   # Returns its size in bytes.
    def read str
       if self.if
          str = str.sysread(size) if not str.kind_of?(::String)
@@ -20,15 +22,18 @@ module NumericField
    end
    alias_method :read_io, :read
 
+   # Writes a packed numeric to an IO.
    def write io
       io.write [@value].pack(format)
    end
 
-   def format; end
-
    def inspect
       "#<#{ self.class.name } #@value>"
    end
+
+   private
+
+   def format; end
 end
 
 define_numeric = proc do |name, size, fmt|
@@ -59,7 +64,7 @@ define_numeric = proc do |name, size, fmt|
       @@FORMAT = '#{fmt[1]}'.freeze
    RUBY
 
-   # must hardcode field name, otherwise changed Int8E => int8_e
+   # must hardcode field name eg. int8E, otherwise changed Int8E => int8_e
    (num_E = num.dup).class_eval <<-RUBY
       def self.field_name; '#{num.field_name}E'; end
       def self.name; '#{name}E'; end
