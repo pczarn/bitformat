@@ -1,3 +1,4 @@
+require 'stringio'
 require 'set'
 
 module BitFormat
