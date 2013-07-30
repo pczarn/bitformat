@@ -58,7 +58,7 @@ class Bit < Field
 
       if (bit = parent.values.last).kind_of? Bit
          # append to existing bitfield
-         num = parent.values.index(bit)
+         num = parent.values.index {|field| field.equal? bit }
 
          parent.define_field(self, label, opts)
          this_field = parent.fields[label]

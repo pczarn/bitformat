@@ -7,7 +7,7 @@ FIXNUM_BITS = 0.size*8 - 2
 module NumericField
    extend Forwardable
    methods = Fixnum.instance_methods - Object.instance_methods - [:initialize_copy]
-   def_delegators :@value, *methods, :eql?, :==, :<=>, :hash, :to_s
+   def_delegators :@value, *methods, :hash, :to_s
 
    # Unpacks a numeric from a string.
    # Returns its size in bytes.
@@ -27,6 +27,19 @@ module NumericField
       io.write [@value].pack(format)
    end
 
+   def ==(other)
+      other = other.value if other.kind_of?(Field)
+      @value == other
+   end
+
+   def eql?(other)
+      other = other.value if other.kind_of?(Field)
+      @value.eql? other
+   end
+
+   def <=>(other)
+      @value <=> other.to_int
+   end
    def inspect
       "#<#{ self.class.name } #@value>"
    end
