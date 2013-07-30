@@ -6,7 +6,7 @@ FIXNUM_BITS = 0.size*8 - 2
 
 module NumericField
    extend Forwardable
-   methods = Fixnum.instance_methods - Object.instance_methods
+   methods = Fixnum.instance_methods - Object.instance_methods - [:initialize_copy]
    def_delegators :@value, *methods, :eql?, :==, :<=>, :hash, :to_s
 
    # Unpacks a numeric from a string.

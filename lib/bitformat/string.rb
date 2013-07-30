@@ -4,7 +4,7 @@ module BitFormat
 
 module StringField
    extend Forwardable
-   methods = String.instance_methods - Object.instance_methods - [:size, :length]
+   methods = String.instance_methods - Object.instance_methods - [:size, :length, :initialize_copy]
    def_delegators :@value, *methods, :eql?, :==, :hash, :to_s, :<=>
 
    def inspect
