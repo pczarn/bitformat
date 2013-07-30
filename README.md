@@ -1,4 +1,5 @@
 ## BitFormat, a DSL for binary data in Ruby
+[![Build Status](https://secure.travis-ci.org/pczarn/bitformat.png)](https://travis-ci.org/pczarn/bitformat)
 * Simple
 * Fast
 * Easily extensible
