@@ -4,11 +4,10 @@ module BitFormat
 class Array < Field
    attr_reader :values
 
-   # The constant number of elements can be set with +length+ option.
-   # The +until+ option can be used to read elements until a condition
-   # is true.
-   # If a block is provided, it extends a new subclass of Stream.
-   # Otherwise +type+ has to be specified.
+   # The constant number of elements can be set with the +length+ option.
+   # The +until+ option can be used to read elements until a condition is true.
+   # The +type+ of an element defaults to an empty Stream class.
+   # If a block is provided, it extends the type of elements.
    #
    def initialize opts={}, &block
       super;
@@ -16,20 +15,23 @@ class Array < Field
       @size = nil
       @until = opts[:until]
       @length = opts[:length] if opts[:length].kind_of? Integer
+      @type = Field.by_name(opts[:type] || :stream)
 
-      if opt_type = opts[:type]
-         # type is provided
-         @type = Field.by_name(opt_type)
-      elsif block_given?
-         # type is a custom stream
-         @type = Class.new(Stream, &block)
-         @type.endian @endian
-      else
-         raise ArgumentError.new('unspecified type')
+      if block_given?
+         # pass endian and extend type
+         @type = @type.dup
+         @type.endian(@endian) if @type.respond_to? :endian
+         @type.class_eval(&block)
       end
 
-      @values = ::Array.new(@length) { @type.new(endian: @endian, parent: @parent) } if @length
-      @values ||= [] if @until
+      @values =
+      if @length
+         ::Array.new(@length) { @type.new(endian: @endian, parent: @parent) }
+      elsif @until
+         []
+      else
+         raise ArgumentError.new('expected option `length` or `until`')
+      end
    end
 
    def initialize_copy _
@@ -46,12 +48,10 @@ class Array < Field
       @offset = input.pos
 
       if @until
-         @size = loop.inject(0) {|pos|
-            @values << field = @type.new
-            field.read(str[pos .. -1])
-
-            break pos + field.size if field.instance_exec(&@until)
-            pos + field.size
+         loop {
+            @values << field = @type.new(endian: @endian, parent: @parent)
+            field.read_io input
+            break if field.send(@until)
          }
       else
          @values ||= ::Array.new(length) { @type.new(endian: @endian, parent: @parent) }
@@ -74,18 +74,22 @@ class Array < Field
       @size = io.pos - @offset
    end
 
+   # Writes each element to a writable object.
    def write io
       @values.each {|el|
          el.write io
       }
    end
 
-   def assign obj
+   # Assigns values of each field.
+   def assign ary
       @values.zip(obj) {|field, value|
          field.assign value
       }
+      self
    end
 
+   # Creates a string representation of +self+.
    def inspect
       "#<Array #{ "@length=#@length, " if @length }#{ "@until=#@until, " if @until }#@values>"
    end
@@ -99,14 +103,12 @@ class Array < Field
          @@until_proc ||= dup.class_eval do
             alias_method :read_io, :read_io_until
             public :read_io
-            define_method(:length) { @values.length }
             self
          end
       when Symbol
          @@until_sym ||= dup.class_eval do
             alias_method :read_io, :read_io_until_sym
             public :read_io
-            define_method(:length) { @values.length }
             self
          end
       else
@@ -129,7 +131,7 @@ class Array < Field
    def read_io_until_sym io
       @offset = io.pos
 
-      @size = loop {
+      loop {
          @values << field = @type.new(endian: @endian, parent: @parent)
          field.read_io io
          break if field.send(@until)
