@@ -118,19 +118,19 @@ class Stream < Field
    end
    alias_method :read_io, :read
 
+   # Writes each element to a writable object.
+   def write io
+      @values.each {|field|
+         field.write io
+      }
+   end
+
    # Assigns values of each field.
    def assign ary
       @values.zip(ary).each {|field, obj|
          field.assign obj
       }
       self
-   end
-
-   # Takes a writable object.
-   def write io
-      @values.each {|field|
-         field.write io
-      }
    end
 
    # Returns a binary string that represents the contents.
@@ -150,6 +150,7 @@ class Stream < Field
       Hash[self.class.labels.zip(@values)]
    end
 
+   # Creates a string representation of +self+.
    def inspect
       "#<Stream #@values>"
    end
