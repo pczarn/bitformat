@@ -94,7 +94,7 @@ class Stream < Field
 
    def initialize_copy _
       # :nodoc:
-      @values.map!(&:clone).each {|field| field.parent = self }
+      @values = @values.map(&:clone).each {|field| field.parent = self }
    end
 
    # Takes a string or a readable object.

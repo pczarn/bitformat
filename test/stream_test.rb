@@ -129,4 +129,22 @@ class TestStreams < Test::Unit::TestCase
          stream.read @if_string
       end
    end
+
+   def test_copy
+      # create two streams of one class
+      s_orig = NestedString.read @packed
+      stream = NestedString.read @packed2
+
+      # both contain independent values
+      assert_equal @str_val, s_orig.str
+      assert_equal @id_val, s_orig.nested.id
+      assert_equal 123,     stream.nested.id
+
+      # deep clone
+      copy = stream.clone
+      copy.read(@packed)
+
+      assert_equal @id_val, copy.nested.id
+      assert_equal 123, stream.nested.id
+   end
 end

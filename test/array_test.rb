@@ -67,4 +67,23 @@ class TestArrays < Test::Unit::TestCase
       ary_empty = BitFormat::Array.new(length: 1000)
       assert_equal 0, ary_empty.read('')
    end
+
+   def test_copy
+      s1, s2 = 'xy'*10, 'yz'*10
+
+      # create two arrays of one class
+      a_orig = ArrayBlock.read s1
+      stream = ArrayBlock.read s2
+
+      # both contain independent values
+      assert_equal s1, a_orig.to_s
+      assert_equal s2, stream.to_s
+
+      # deep clone
+      copy = stream.clone
+      copy.read(s1)
+
+      assert_equal s1, copy.to_s
+      assert_equal s2, stream.to_s
+   end
 end

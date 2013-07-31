@@ -36,7 +36,7 @@ class Array < Field
 
    def initialize_copy _
       # :nodoc:
-      @values &&= @values.clone
+      @values &&= @values.map(&:clone)
    end
 
    # Takes a string or a readable object.
