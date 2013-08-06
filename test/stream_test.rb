@@ -6,7 +6,7 @@ require 'test/unit'
 require 'bitformat'
 
 class SimpleString < BitFormat::Stream
-   endian NETWORK
+   endian LITTLE
 
    uint16 :len
    string :str, size: :len
@@ -14,14 +14,14 @@ class SimpleString < BitFormat::Stream
 end
 
 class NestedString < BitFormat::Stream
-   network_endian
+   little_endian
 
    uint16 :len, value: 1     # 3
    string :str, size: :len   # 'foo'
 
    stream :nested do
       little_endian
-      uint16E :id             # 42
+      uint16e :id             # 42
    end
 end
 
@@ -30,7 +30,7 @@ class SimpleStringz < BitFormat::Stream
 end
 
 class IfString < BitFormat::Stream
-   endian NETWORK
+   endian LITTLE
 
    uint16 :len
    string :str, size: :len

@@ -11,26 +11,26 @@ class ArrayStream < BitFormat::Stream
 end
 
 class ArrayBlock < BitFormat::Stream
-   endian NETWORK
+   endian LITTLE
    array :ary, length: 10 do
       uint16 :id
    end
 end
 
 class ArrayUntil < BitFormat::Stream
-   endian NETWORK
+   endian LITTLE
    array :ary, until: -> { id.even? } do
       uint16 :id
    end
 end
 
 class ArrayUntilType < BitFormat::Stream
-   endian NETWORK
+   endian LITTLE
    array :ary, until: :even?, type: :uint16
 end
 
 class ArrayNested < BitFormat::Stream
-   endian LITTLE
+   endian NETWORK
    array :ary, length: 3 do
       uint16 :xy
    end

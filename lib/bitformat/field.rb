@@ -4,13 +4,14 @@ require 'set'
 module BitFormat
 
 # endian constants for DSL
-NATIVE, LITTLE, BIG = *(0 .. 2)
-NETWORK = BIG
+LITTLE = 0
+BIG = NETWORK = 1
+NATIVE = [1].pack('S') == [1].pack('S<') ? LITTLE : BIG
 
 class Field
-   NATIVE, LITTLE, BIG = *(0 .. 2)
-   NETWORK = BIG
-   SIZE = nil
+   LITTLE = 0
+   BIG = NETWORK = 1
+   NATIVE = NATIVE
 
    attr_reader :offset, :value
    attr_accessor :size, :until, :length, :parent
