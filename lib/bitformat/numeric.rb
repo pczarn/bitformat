@@ -40,6 +40,7 @@ module NumericField
    def <=>(other)
       @value <=> other.to_int
    end
+
    def inspect
       "#<#{ self.class.name } #@value>"
    end
@@ -47,11 +48,19 @@ module NumericField
    private
 
    def format; end
+
+   def read_endian str
+      if self.if
+         str = str.sysread(size) if not str.kind_of?(::String)
+         @value = format(str).first
+         size
+      else
+         0
+      end
+   end
 end
 
-define_numeric = proc do |name, size, fmt|
-   fmt ||= ["a#{size}"]
-
+define_numeric = proc do |name, size, fmt, padding=nil|
    num = Class.new(Field) do
       include NumericField
 
@@ -61,20 +70,40 @@ define_numeric = proc do |name, size, fmt|
          def bits; #{size*8}; end
       RUBY
 
-      if fmt.size == 3 and fmt.kind_of? ::Array
-         class_eval "def format; @@FORMAT[@endian]; end"
-         format = fmt
+      if fmt.kind_of?(::Array) && fmt.size > 1
+         if padding
+            class_eval <<-RUBY
+               def format str; str.center(#{ size + padding*2 }, ?\0).unpack(@@FORMAT[@endian]); end
+               alias_method :read, :read_endian
+               public :read
+            RUBY
+
+            fmt.first.insert(0, 'x' * padding)
+         else
+            class_eval "def format; @@FORMAT[@endian]; end"
+         end
+
+         format_var = fmt
       else
-         format = fmt.first
+         format_var = fmt.first
       end
 
-      class_variable_set :@@FORMAT, format.freeze
+      class_variable_set :@@FORMAT, format_var.freeze
    end
+
+   const_set name, num
+   Field.register_type num
+
+   num
+end
+
+define_numeric_endian = proc do |name, size, fmt, padding=nil|
+   num = define_numeric.call(name, size, fmt, padding)
 
    (num_e = num.dup).class_eval <<-RUBY
       def self.name; '#{name}e'; end
       def format; @@FORMAT; end
-      @@FORMAT = '#{fmt[1]}'.freeze
+      @@FORMAT = '#{fmt[0]}'.freeze
    RUBY
 
    # must hardcode field name eg. int8E, otherwise changed Int8E => int8_e
@@ -82,44 +111,58 @@ define_numeric = proc do |name, size, fmt|
       def self.field_name; '#{num.field_name}E'; end
       def self.name; '#{name}E'; end
       def format; @@FORMAT; end
-      @@FORMAT = '#{fmt[2]}'.freeze
+      @@FORMAT = '#{fmt[1]}'.freeze
    RUBY
 
-   num.define_singleton_method(:by_endian) do |opts|
-      [num, num_e, num_E][opts[:endian]]
+   if padding
+      num_e.class_eval <<-RUBY
+         def format str; (str << ?\0*#{padding}).unpack(@@FORMAT); end
+         alias_method :read, :read_endian
+         public :read
+      RUBY
+
+      num_E.class_eval <<-RUBY
+         def format str; (?\0*#{padding} << str).unpack(@@FORMAT); end
+         alias_method :read, :read_endian
+         public :read
+      RUBY
    end
 
-   const_set name, num
+   num.define_singleton_method(:by_endian) do |opts|
+      [num_e, num_E][opts[:endian]]
+   end
+
    const_set :"#{name}e", num_e
    const_set :"#{name}E", num_E
 
-   Field.register_type num
    Field.register_type num_e
    Field.register_type num_E
 end
 
+# int8
+define_numeric.call(:Int8, 8, ['c'])
+define_numeric.call(:Uint8, 8, ['c'])
+
 [
-   'c',        # int8
-   's s> s<',  # int16
-   nil,
-   'l l> l<',  # int32
-   nil,
-   nil,
-   nil,
-   'q q> q<',  # int64
-].zip(1 .. 16).each do |fmt, size|
-   if fmt
-      signed_fmt = fmt.split
-      unsigned_fmt = fmt.upcase.split
-   end
+   's< s>',  # int16
+   'l< l>',  # int32
+   'q< q>',  # int64
+].each_with_index do |fmt, i|
+   size = 2**i + 1
+   int_fmt, unsigned_fmt = fmt.split, fmt.upcase.split
 
-   bits = size * 8
+   (2**i - 1).times {|j|
+      pad = 2**(i+1) - size
+      define_numeric_endian.call :"Int#{size*8}", size, int_fmt, pad
+      define_numeric_endian.call :"Uint#{size*8}", size, unsigned_fmt, pad
+      size += 1
+   }
 
-   define_numeric.call :"Int#{bits}", size, signed_fmt
-   define_numeric.call :"Uint#{bits}", size, unsigned_fmt
+   define_numeric_endian.call :"Int#{size*8}", size, int_fmt
+   define_numeric_endian.call :"Uint#{size*8}", size, unsigned_fmt
 end
 
-define_numeric.call :Float, 4, %w(f e g)
-define_numeric.call :Double, 8, %w(D E G)
+define_numeric_endian.call :Float, 4, %w(e g)
+define_numeric_endian.call :Double, 8, %w(E G)
 
 end
