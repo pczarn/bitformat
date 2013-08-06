@@ -20,17 +20,12 @@ class String < Field
       super;
    end
 
-
    # Takes a readable object.
    # Returns the number of bytes read.
    #
    def read_io io
-      if self.if
-         @value = io.sysread(size)
-         size
-      else
-         0
-      end
+      @value = io.sysread(size)
+      size
    end
 end
 

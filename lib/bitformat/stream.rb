@@ -24,6 +24,21 @@ module Container
       field_class = field_class.by_endian(opts) if field_class.respond_to? :by_endian
       fields[label] = field = field_class.new(opts, &extension)
 
+      if opts.member? :if
+         class << field
+            alias_method :read_if, :read
+
+            def read input
+               if not self.if
+                  return @size = 0
+               end
+
+               read_if input
+            end
+
+            alias_method :read_io, :read
+         end
+      end
       opts.each do |key, option|
          case option
          when Proc
@@ -102,11 +117,6 @@ class Stream < Field
    # Returns the number of bytes read.
    #
    def read input
-      if not self.if
-         # this stream is excluded
-         return @size = 0
-      end
-
       # wrap strings in stringIO
       input = StringIO.new(input) if input.kind_of? ::String
 

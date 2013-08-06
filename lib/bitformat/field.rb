@@ -72,13 +72,6 @@ class Field
       @@fields[sym.to_sym]
    end
 
-   protected
-
-   # Fields are present by default.
-   # This method is dynamically redefined by Container#define_field.
-   #
-   def if; true; end
-
    # :field_class => FieldClass
    @@fields = {}
 

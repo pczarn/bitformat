@@ -12,13 +12,9 @@ module NumericField
    # Unpacks a numeric from a string.
    # Returns its size in bytes.
    def read str
-      if self.if
-         str = str.sysread(size) if not str.kind_of?(::String)
-         @value = str.unpack(format).first
-         size
-      else
-         0
-      end
+      str = str.sysread(size) if not str.kind_of?(::String)
+      @value = str.unpack(format).first
+      size
    end
    alias_method :read_io, :read
 
@@ -50,13 +46,9 @@ module NumericField
    def format; end
 
    def read_endian str
-      if self.if
-         str = str.sysread(size) if not str.kind_of?(::String)
-         @value = format(str).first
-         size
-      else
-         0
-      end
+      str = str.sysread(size) if not str.kind_of?(::String)
+      @value = format(str).first
+      size
    end
 end
 
