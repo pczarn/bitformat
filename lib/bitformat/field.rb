@@ -20,6 +20,7 @@ class Field
    # Endian defaults to native.
    #
    def initialize opts={}
+      @value = nil
       @endian = opts[:endian] || NATIVE
       @opt_if = opts[:if]
       @parent = opts[:parent]

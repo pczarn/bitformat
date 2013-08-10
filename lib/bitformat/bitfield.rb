@@ -64,7 +64,9 @@ class Bit < Field
          this_field = parent.fields[label]
 
          num2 = bit.fields.size
+
          parent.instance_eval do
+            remove_method label
             define_method(label) {|| @values[num].fields[num2] }
          end
 
@@ -119,6 +121,7 @@ class BitField < Bit
       if opts[:endian] == Stream::BIG
          # return memoized, modified self
          @@big_endian ||= dup.class_eval do
+            remove_method :read
             alias_method :read, :read_big_endian
             public :read
             self

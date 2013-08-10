@@ -14,7 +14,7 @@ class Array < Field
 
       @size = nil
       @until = opts[:until]
-      @length = opts[:length] if opts[:length].kind_of? Integer
+      @length = opts[:length].kind_of?(Integer) && opts[:length]
       @type = Field.by_name(opts[:type] || :stream)
 
       if block_given?
@@ -101,12 +101,14 @@ class Array < Field
       when Proc
          # return memoized, modified self
          @@until_proc ||= dup.class_eval do
+            remove_method :read_io
             alias_method :read_io, :read_io_until
             public :read_io
             self
          end
       when Symbol
          @@until_sym ||= dup.class_eval do
+            remove_method :read_io
             alias_method :read_io, :read_io_until_sym
             public :read_io
             self

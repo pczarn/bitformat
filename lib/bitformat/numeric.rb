@@ -43,8 +43,6 @@ module NumericField
 
    private
 
-   def format; end
-
    def read_endian str
       str = str.sysread(size) if not str.kind_of?(::String)
       @value = format(str).first
@@ -66,6 +64,7 @@ define_numeric = proc do |name, size, fmt, padding=nil|
          if padding
             class_eval <<-RUBY
                def format str; str.center(#{ size + padding*2 }, ?\0).unpack(@@FORMAT[@endian]); end
+               undef_method :read
                alias_method :read, :read_endian
                public :read
             RUBY
@@ -93,27 +92,38 @@ define_numeric_endian = proc do |name, size, fmt, padding=nil|
    num = define_numeric.call(name, size, fmt, padding)
 
    (num_e = num.dup).class_eval <<-RUBY
+      class << self
+         undef_method :name
+      end
       def self.name; '#{name}e'; end
+      remove_method :format
       def format; @@FORMAT; end
       @@FORMAT = '#{fmt[0]}'.freeze
    RUBY
 
    # must hardcode field name eg. int8E, otherwise changed Int8E => int8_e
    (num_E = num.dup).class_eval <<-RUBY
+      class << self
+         undef_method :name
+         undef_method :field_name
+      end
       def self.field_name; '#{num.field_name}E'; end
       def self.name; '#{name}E'; end
+      remove_method :format
       def format; @@FORMAT; end
       @@FORMAT = '#{fmt[1]}'.freeze
    RUBY
 
    if padding
       num_e.class_eval <<-RUBY
+         undef_method :format, :read
          def format str; (str << ?\0*#{padding}).unpack(@@FORMAT); end
          alias_method :read, :read_endian
          public :read
       RUBY
 
       num_E.class_eval <<-RUBY
+         undef_method :format, :read
          def format str; (?\0*#{padding} << str).unpack(@@FORMAT); end
          alias_method :read, :read_endian
          public :read

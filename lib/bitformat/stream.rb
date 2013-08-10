@@ -91,7 +91,7 @@ class Stream < Field
          # evaluate block in context of an eigenclass after passing endianness
          this_class = singleton_class
          this_class.endian(opts[:endian] || 0)
-         this_class.instance_eval &extension
+         this_class.instance_eval(&extension)
       else
          this_class = self.class
          this_class.endian(opts[:endian] || 0)
