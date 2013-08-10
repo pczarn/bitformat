@@ -26,16 +26,10 @@ module Container
 
       if opts.member? :if
          class << field
-            alias_method :read_if, :read
-
-            def read input
-               if not self.if
-                  return @size = 0
-               end
-
-               read_if input
-            end
-
+            alias_method :read_val, :read
+            undef_method :read
+            alias_method :read, :read_if
+            public :read
             alias_method :read_io, :read
          end
       end
