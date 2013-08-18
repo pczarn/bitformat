@@ -54,27 +54,29 @@ class Bit < Field
    private
 
    def self.defined_in parent, bits, label, opts={}
-      opts[:bits] = bits
+      bit0_i = parent.values.rindex {|field| field.kind_of? BitField }
+      byte_i = parent.values.rindex {|field| not field.kind_of? Bit }
 
-      if (bit = parent.values.last).kind_of? Bit
-         # append to existing bitfield
-         num = parent.values.index {|field| field.equal? bit }
+      if bit0_i && byte_i && bit0_i > byte_i && opts.empty?
+         # append optionless field to an existing bitfield
+         bit = parent.values[bit0_i]
 
-         parent.define_field(self, label, opts)
-         this_field = parent.fields[label]
+         parent.define_field(self, label, opts.merge(bits: bits))
+         bit.define_field(parent.values.last)
 
-         num2 = bit.fields.size
-
-         parent.instance_eval do
-            remove_method label
-            define_method(label) {|| @values[num].fields[num2] }
+         class << parent.values.last
+            undef_method :read
+            define_method(:read) {|_| }
+            alias_method :read_io, :read
          end
-
-         parent.values.pop
-         parent.labels.pop
-         bit.define_field this_field
       else
-         parent.define_field(BitField, label, opts)
+         # create a new bitfield
+         parent.define_field(BitField, label,
+            opts.merge(
+               field_offset: parent.values.size,
+               bits: bits
+            )
+         )
       end
    end
 end
@@ -86,7 +88,8 @@ class BitField < Bit
    def initialize opts={}
       super;
       @all_bits = @bits
-      @fields = []
+      @fields_num = 0
+      @fields_offset = opts[:field_offset] + 1
    end
 
    def read str
@@ -96,7 +99,7 @@ class BitField < Bit
 
       @value = val & @mask
       val >>= @bits
-      @fields.each {|field|
+      parent.values[@fields_offset, @fields_num].each {|field|
          val >>= field.assign(val)
       }
       size
@@ -107,21 +110,20 @@ class BitField < Bit
    end
 
    def inspect
-      "#<Bit #@bits:#@value #{@fields.map(&:inspect).join(?\s)}>"
+      "#<Bit #@bits:#@value>"
    end
 
    def define_field f
       @all_bits += f.bits
       @size = (@all_bits.to_f / 8).ceil
-      @fields << f
+      @fields_num += 1
       @fmt = "C#@size"
    end
 
    def self.by_endian opts
       if opts[:endian] == Stream::BIG
          # return memoized, modified self
-         @@big_endian ||= dup.class_eval do
-            remove_method :read
+         @@big_endian ||= Class.new(self) do
             alias_method :read, :read_big_endian
             public :read
             self
@@ -138,7 +140,7 @@ class BitField < Bit
 
       @value = val & @mask
       val >>= @bits
-      @fields.each {|field|
+      parent.values[@fields_offset, @fields_num].each {|field|
          val >>= field.assign(val)
       }
       size
