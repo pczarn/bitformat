@@ -54,12 +54,12 @@ class Bit < Field
    private
 
    def self.defined_in parent, bits, label, opts={}
-      bit0_i = parent.values.rindex {|field| field.kind_of? BitField }
-      byte_i = parent.values.rindex {|field| not field.kind_of? Bit }
+      bit_i = parent.values.rindex {|field| field.kind_of? BitField }
 
-      if bit0_i && byte_i && bit0_i > byte_i && opts.empty?
+      if bit_i && parent.values[bit_i .. -1].all? {|f| f.kind_of? Bit } &&
+            !opts.any? {|_, v| v.kind_of?(Proc) || v.kind_of?(Symbol) }
          # append optionless field to an existing bitfield
-         bit = parent.values[bit0_i]
+         bit = parent.values[bit_i]
 
          parent.define_field(self, label, opts.merge(bits: bits))
          bit.define_field(parent.values.last)

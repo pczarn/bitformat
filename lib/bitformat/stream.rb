@@ -24,7 +24,7 @@ module Container
       field_class = field_class.by_endian(opts) if field_class.respond_to? :by_endian
       fields[label] = field = field_class.new(opts, &extension)
 
-      if opts.member? :if
+      if opts[:if].kind_of?(Proc) || opts[:if].kind_of?(Symbol)
          class << field
             alias_method :read_val, :read
             undef_method :read
