@@ -58,6 +58,14 @@ class Field
       read_val input
    end
 
+   def read_io_if input
+      if not self.if
+         return @size = 0
+      end
+
+      read_io_val input
+   end
+
    # Creates and returns an instance.
    # Reads data from input.
    #

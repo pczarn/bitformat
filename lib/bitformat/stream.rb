@@ -26,11 +26,14 @@ module Container
 
       if opts[:if].kind_of?(Proc) || opts[:if].kind_of?(Symbol)
          class << field
-            alias_method :read_val, :read
+            alias_method :read_val,    :read
+            alias_method :read_io_val, :read_io
             undef_method :read
-            alias_method :read, :read_if
+            undef_method :read_io
+            alias_method :read,    :read_if
+            alias_method :read_io, :read_io_if
             public :read
-            alias_method :read_io, :read
+            public :read_io
          end
       end
       opts.each do |key, option|
