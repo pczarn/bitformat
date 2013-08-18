@@ -47,8 +47,20 @@ class Instruction < BitFormat::Stream
    uint32 :displ32, if: -> { mod == 2 }
 end
 
+class WeirdInstruction < BitFormat::Stream
+   bit 2, :mod
+   bit 3, :reg
+   bit 3, :rm
+
+   bit 1, :reserved
+
+   bit 2, :scale, if: -> { rm == 0b100 && mod != 0b11 }
+   bit 3, :index
+   bit 3, :base
+end
+
 class TestStreams < Test::Unit::TestCase
-   def test_bitfield
+   def test_bit_read
       stream = NestedBits.read([42, 0xFF, 10].pack('SCC'))
       assert_equal 15, stream.test2
       assert_equal 10, stream.test3
@@ -56,5 +68,12 @@ class TestStreams < Test::Unit::TestCase
       stream = BitsBE.read([42, 0xFF, 10].pack('SCC'))
       assert_equal 10, stream.test1
       assert_equal 15, stream.test3
+   end
+
+   def test_bit_if
+      stream = WeirdInstruction.read([0b10000000, 0xFF, 10].pack('CCC'))
+      assert_equal 3, stream.size
+      assert_equal 2, stream.scale
+      assert_equal 2, stream.index
    end
 end
