@@ -32,8 +32,7 @@ module Container
             undef_method :read_io
             alias_method :read,    :read_if
             alias_method :read_io, :read_io_if
-            public :read
-            public :read_io
+            public(:read, :read_io)
          end
       end
       opts.each do |key, option|

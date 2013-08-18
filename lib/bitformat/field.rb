@@ -48,8 +48,6 @@ class Field
       io.write @value
    end
 
-   private
-
    def read_if input
       if not self.if
          return @size = 0
