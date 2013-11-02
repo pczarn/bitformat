@@ -153,12 +153,19 @@ class Stream < Field
 
    # Returns a hash of fields and their labels.
    def to_h
-      Hash[self.class.labels.zip(@values)]
+      Hash[(self.class.labels + self.singleton_class.labels).zip(@values)]
    end
 
    # Creates a string representation of +self+.
    def inspect
-      "#<Stream #@values>"
+      "#<Stream #{ to_h }>"
+   end
+
+   def pretty_print(pp)
+      pp.object_address_group(self) {
+         pp.breakable
+         pp.pp_hash to_h
+      }
    end
 end
 
