@@ -11,6 +11,3 @@
 ### Bit field
 ## Common optional parameters
 
-## To do
-* Generation of inline code
-* Optimization

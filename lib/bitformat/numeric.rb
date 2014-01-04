@@ -3,7 +3,6 @@ require 'forwardable'
 module BitFormat
 
 module NumericField
-   include Yell::Loggable
    extend Forwardable
    methods = Fixnum.instance_methods - Object.instance_methods - [:initialize_copy]
    def_delegators :@value, *methods, :hash, :to_s
