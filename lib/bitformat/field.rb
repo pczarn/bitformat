@@ -6,7 +6,7 @@ module BitFormat
 # endian constants for DSL
 LITTLE = 0
 BIG = NETWORK = 1
-NATIVE = [1].pack('S') == [1].pack('S<') ? LITTLE : BIG
+NATIVE = ([1].pack('S') == [1].pack('S<')) && LITTLE || BIG
 
 class Field
    LITTLE = 0
@@ -19,7 +19,7 @@ class Field
    # Takes common options: +endian+, +parent+ and +if+.
    # Endian defaults to native.
    #
-   def initialize opts={}
+   def initialize(opts={})
       @value = nil
       @endian = opts[:endian] || NATIVE
       @opt_if = opts[:if]
@@ -27,11 +27,11 @@ class Field
    end
 
    # Assigns field's value to given object.
-   def assign obj
+   def assign(obj)
       @value = obj
    end
 
-   def read str
+   def read(str)
       if str.kind_of? String
          read_io StringIO.new(str)
       else
@@ -39,16 +39,16 @@ class Field
       end
    end
 
-   def read_io io
+   def read_io(io)
       @value = io.sysread(size)
       size
    end
 
-   def write io
+   def write(io)
       io.write @value
    end
 
-   def read_if input
+   def read_if(input)
       if not self.if
          return @size = 0
       end
@@ -94,22 +94,22 @@ class Field
 
    @@containers = Set.new
 
-   def self.type_defined_in parent
+   def self.type_defined_in(parent)
       parent.define_type field_name, self
    end
 
-   def self.inherited field_class
+   def self.inherited(field_class)
       register_type(field_class) if field_class.name
    end
 
-   def self.register_type field_class
+   def self.register_type(field_class)
       @@fields[field_class.field_name.to_sym] = field_class
-      @@containers.each {|container| field_class.type_defined_in container }
+      @@containers.each {|container| field_class.type_defined_in(container) }
    end
 
-   def self.register container_class
+   def self.register(container_class)
       @@containers << container_class
-      @@fields.each_value {|field| field.type_defined_in container_class }
+      @@fields.each_value {|field| field.type_defined_in(container_class) }
    end
 end
 

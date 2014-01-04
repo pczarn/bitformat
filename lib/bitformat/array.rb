@@ -9,7 +9,7 @@ class Array < Field
    # The +type+ of an element defaults to an empty Stream class.
    # If a block is provided, it extends the type of elements.
    #
-   def initialize opts={}, &block
+   def initialize(opts={}, &block)
       super;
 
       @size = nil
@@ -34,8 +34,7 @@ class Array < Field
       end
    end
 
-   def initialize_copy _
-      # :nodoc:
+   def initialize_copy(_) # :nodoc:
       @values &&= @values.map(&:clone)
    end
 
@@ -43,7 +42,7 @@ class Array < Field
    # Saves the position in bytes.
    # Returns the number of bytes read.
    #
-   def read input
+   def read(input)
       input = StringIO.new(input) if input.kind_of? ::String
       @offset = input.pos
 
@@ -63,7 +62,7 @@ class Array < Field
       @size = input.pos - @offset
    end
 
-   def read_io io
+   def read_io(io)
       @offset = io.pos
 
       @values ||= ::Array.new(length) { @type.new(endian: @endian, parent: @parent) }
@@ -75,14 +74,14 @@ class Array < Field
    end
 
    # Writes each element to a writable object.
-   def write io
+   def write(io)
       @values.each {|el|
          el.write io
       }
    end
 
    # Assigns values of each field.
-   def assign ary
+   def assign(ary)
       @values.zip(obj) {|field, value|
          field.assign value
       }
@@ -91,12 +90,16 @@ class Array < Field
 
    # Creates a string representation of +self+.
    def inspect
-      "#<Array #{ "@length=#@length, " if @length }#{ "@until=#@until, " if @until }#@values>"
+      content = ([:@length, :@until].map {|sym|
+         var = instance_variable_get(sym)
+         var && "#{ sym }=#{ var }"
+      } << @values).compact.join(", ")
+      "\#<Array #{ content }>"
    end
 
    private
 
-   def self.by_endian opts
+   def self.by_endian(opts)
       case opts[:until]
       when Proc
          # return memoized, modified self
@@ -118,7 +121,7 @@ class Array < Field
       end
    end
 
-   def read_io_until io
+   def read_io_until(io)
       @offset = io.pos
 
       loop {
@@ -130,7 +133,7 @@ class Array < Field
       @size = io.pos - @offset
    end
 
-   def read_io_until_sym io
+   def read_io_until_sym(io)
       @offset = io.pos
 
       loop {

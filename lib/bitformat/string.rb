@@ -4,18 +4,21 @@ module BitFormat
 
 module StringField
    extend Forwardable
-   methods = String.instance_methods - Object.instance_methods - [:size, :length, :initialize_copy]
-   def_delegators :@value, *methods, :eql?, :==, :hash, :to_s, :<=>
+   def_delegators(
+      :@value, :eql?, :==, :hash, :to_s, :<=>,
+      *String.instance_methods -
+         (Object.instance_methods + [:size, :length, :initialize_copy])
+   )
 
    def inspect
-      "#<String \"#@value\">"
+      "#<String \"#{@value}\">"
    end
 end
 
 class String < Field
    include StringField
 
-   def initialize opts={}
+   def initialize(opts={})
       @match = opts[:match] if opts[:match]
       super;
    end
@@ -23,7 +26,7 @@ class String < Field
    # Takes a readable object.
    # Returns the number of bytes read.
    #
-   def read_io io
+   def read_io(io)
       @value = io.sysread(size)
       size
    end
@@ -36,14 +39,14 @@ class Stringz < Field
    # Consumes bytes until and including null.
    # Returns the number of bytes read.
    #
-   def read_io io
-      @value = io.readline(?\0)
+   def read_io(io)
+      @value = io.readline("\0")
       # removes last character and fails if it wasn't null
-      raise EOFError if @value.slice!(-1) != ?\0
+      raise EOFError if @value.slice!(-1) != "\0"
       @size = @value.size + 1
    end
 
-   def assign obj
+   def assign(obj)
       @value = obj
       @size = @value && @value.size + 1
    end
@@ -56,7 +59,7 @@ class Rest < Field
    # Consumes bytes until eof.
    # Returns the number of bytes read.
    #
-   def read_io io
+   def read_io(io)
       @size = (@value = io.sysread).size
    end
 end

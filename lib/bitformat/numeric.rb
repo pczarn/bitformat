@@ -2,16 +2,15 @@ require 'forwardable'
 
 module BitFormat
 
-FIXNUM_BITS = 0.size*8 - 2
-
 module NumericField
+   include Yell::Loggable
    extend Forwardable
    methods = Fixnum.instance_methods - Object.instance_methods - [:initialize_copy]
    def_delegators :@value, *methods, :hash, :to_s
 
    # Unpacks a numeric from a string.
    # Returns its size in bytes.
-   def read str
+   def read(str)
       str = str.sysread(size) if not str.kind_of?(::String)
       @value = str.unpack(format).first
       size
@@ -19,7 +18,7 @@ module NumericField
    alias_method :read_io, :read
 
    # Writes a packed numeric to an IO.
-   def write io
+   def write(io)
       io.write [@value].pack(format)
    end
 
@@ -43,7 +42,7 @@ module NumericField
 
    private
 
-   def read_endian str
+   def read_endian(str)
       str = str.sysread(size) if not str.kind_of?(::String)
       @value = format(str).first
       size
@@ -57,9 +56,9 @@ module NumericField
             def self.name; "#{name}"; end
             def size; #{size}; end
             def bits; #{size*8}; end
+            def format; @@FORMAT[@endian]; end
          RUBY
 
-         class_eval "def format; @@FORMAT[@endian]; end"
          if fmt.kind_of?(::Array) && fmt.size > 1
             if padding > 0
                class_eval <<-RUBY
@@ -72,6 +71,7 @@ module NumericField
                RUBY
 
                format_var = ['x' * padding + fmt.first, fmt.last]
+               format_var.each(&:freeze)
             else
                format_var = fmt
             end
@@ -95,10 +95,10 @@ module NumericField
          class << self
             undef_method :name
          end
-         def self.name; '#{name}e'; end
+         def self.name; '#{ name }e'; end
          remove_method :format
          def format; @@FORMAT; end
-         @@FORMAT = '#{fmt[0]}'.freeze
+         @@FORMAT = '#{ fmt[0] }'.freeze
       RUBY
 
       # must hardcode field name eg. int8E, otherwise changed Int8E => int8_e
@@ -107,11 +107,11 @@ module NumericField
             undef_method :name
             undef_method :field_name
          end
-         def self.field_name; '#{num.field_name}E'; end
-         def self.name; '#{name}E'; end
+         def self.field_name; '#{ num.field_name }E'; end
+         def self.name; '#{ name }E'; end
          remove_method :format
          def format; @@FORMAT; end
-         @@FORMAT = '#{fmt[1]}'.freeze
+         @@FORMAT = '#{ fmt[1] }'.freeze
       RUBY
 
       if padding > 0

@@ -4,7 +4,6 @@ $LOAD_PATH.unshift libdir unless $LOAD_PATH.include?(libdir)
 
 require 'test/unit'
 require 'bitformat'
-require 'bitformat/bitfield'
 
 class NestedBits < BitFormat::Stream
    little_endian

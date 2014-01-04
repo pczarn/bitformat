@@ -18,7 +18,7 @@ class Bit < Field
    attr_reader :bits, :size
 
    # Option +bits+.
-   def initialize opts={}
+   def initialize(opts={})
       super;
       @bits = opts[:bits]
       @size = (@bits.to_f / 8).ceil
@@ -27,14 +27,14 @@ class Bit < Field
    end
 
    # Unpacks an integer and extracts bits.
-   def read str
+   def read(str)
       @value = str.unpack(@fmt).first & @mask
    end
 
    # Takes a readable object.
    # Returns the number of bytes consumed.
    #
-   def read_io io
+   def read_io(io)
       @value = io.sysread(size).unpack(@fmt).first & @mask
       size
    end
@@ -42,18 +42,18 @@ class Bit < Field
    # Takes a number.
    # Returns the number of bits extracted.
    #
-   def assign num
+   def assign(num)
       @value = num & @mask
       @bits
    end
 
    def inspect
-      "#@bits:#@value"
+      "#{@bits}:#{@value}"
    end
 
    private
 
-   def self.defined_in parent, bits, label, opts={}
+   def self.defined_in(parent, bits, label, opts={})
       bit_i = parent.values.rindex {|field| field.kind_of? BitField }
 
       if bit_i && parent.values[bit_i .. -1].all? {|f| f.kind_of? Bit } &&
@@ -72,10 +72,8 @@ class Bit < Field
       else
          # create a new bitfield
          parent.define_field(BitField, label,
-            opts.merge(
-               field_offset: parent.values.size,
-               bits: bits
-            )
+            opts.merge(field_offset: parent.values.size,
+                       bits: bits)
          )
       end
    end
@@ -85,17 +83,17 @@ end
 class BitField < Bit
    attr_reader :fields
 
-   def initialize opts={}
+   def initialize(opts={})
       super;
       @all_bits = @bits
       @fields_num = 0
       @fields_offset = opts[:field_offset] + 1
    end
 
-   def read str
+   def read(str)
       val = str.unpack(@fmt)
       val = val.reverse_each if @endian != BIG
-      val = val.inject(0) {|n, obj| (n << 8) | obj }
+      val = val.reduce(0) {|a, el| (a << 8) | el }
 
       @value = val & @mask
       val >>= @bits
@@ -105,7 +103,7 @@ class BitField < Bit
       size
    end
 
-   def read_io io
+   def read_io(io)
       read io.sysread(size)
    end
 
@@ -113,14 +111,14 @@ class BitField < Bit
       "#<Bit #@bits:#@value>"
    end
 
-   def define_field f
+   def define_field(f)
       @all_bits += f.bits
       @size = (@all_bits.to_f / 8).ceil
       @fields_num += 1
       @fmt = "C#@size"
    end
 
-   def self.by_endian opts
+   def self.by_endian(opts)
       if opts[:endian] == Stream::BIG
          # return memoized, modified self
          @@big_endian ||= Class.new(self) do
@@ -135,8 +133,8 @@ class BitField < Bit
 
    private
 
-   def read_big_endian str
-      val = str.unpack(@fmt).inject(0) {|n, obj| (n << 8) | obj }
+   def read_big_endian(str)
+      val = str.unpack(@fmt).reduce(0) {|a, el| (a << 8) | el }
 
       @value = val & @mask
       val >>= @bits
