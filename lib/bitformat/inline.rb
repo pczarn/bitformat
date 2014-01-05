@@ -57,7 +57,7 @@ module Container
          return(v__self);
       }
 //----
-      VALUE read(VALUE _v_str) {
+      VALUE read_instance(VALUE _v_str) {
          if(rb_respond_to(_v_str, rb_intern("read"))) {
             _v_str = rb_funcall(_v_str, rb_intern("read"), 0);
          }
@@ -89,7 +89,7 @@ module Container
       C_READ_ARY % c_source('_self')
    end
 
-   def inline(flag='-O3 -g')
+   def inline(flag='-O3 -std=c99')
       class_read_ary = C_READ_ARY % c_source('_self')
       class_read = C_READ % c_source('_self')
       method_write = C_WRITE % c_write_source('_self', '_str', nil)
@@ -97,7 +97,7 @@ module Container
       inline_c do |builder|
          builder.add_compile_flags(flag)
          builder.c_singleton(class_read_ary)
-         builder.c_singleton(class_read)
+         builder.c_singleton(class_read, :method_name => "read")
          builder.c(method_write)
       end
 
