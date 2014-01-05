@@ -155,6 +155,10 @@ class Stream < Field
       @values.clone
    end
 
+   def to_ary
+      @values
+   end
+
    # Returns a hash of fields and their labels.
    def to_h
       Hash[labels.zip(@values)]

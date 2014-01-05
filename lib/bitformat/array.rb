@@ -88,6 +88,14 @@ class Array < Field
       self
    end
 
+   def to_a
+      @values
+   end
+
+   def to_ary
+      @values
+   end
+
    # Creates a string representation of +self+.
    def inspect
       content = ([:@length, :@until].map {|sym|

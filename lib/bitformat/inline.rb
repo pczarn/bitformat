@@ -101,7 +101,7 @@ module Container
       end
 
       define_method(:to_s) do
-         c_write(to_a.map(&:value))
+         c_write(@values.flatten)
       end
 
       self
