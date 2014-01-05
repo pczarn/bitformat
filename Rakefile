@@ -2,10 +2,14 @@ require 'rake/testtask'
 
 task :default => :test
 
-task :test => [
-   'test:test',
-   'test:inline'
-]
+if defined?(RUBY_DESCRIPTION) && RUBY_DESCRIPTION =~ /^ruby/
+   task :test => [
+      'test:test',
+      'test:inline'
+   ]
+else
+   task :test => 'test:test'
+end
 
 namespace :test do
    Rake::TestTask.new do |t|

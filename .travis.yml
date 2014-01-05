@@ -4,11 +4,10 @@ notifications:
     on_success: change
     on_failure: always
 rvm:
-  - 1.9.3
-  - 2.0.0
-  - rbx-19mode
-  - jruby-19mode
-  - jruby-20mode
+  - "1.9.3"
+  - "2.0.0"
+  - "2.1.0"
   - jruby-head
+  - rbx
 matrix:
   allow_failures:
