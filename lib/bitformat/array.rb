@@ -82,8 +82,8 @@ class Array < Field
 
    # Assigns values of each field.
    def assign(ary)
-      @values.zip(obj) {|field, value|
-         field.assign value
+      @values.zip(ary) {|field, val|
+         field.assign(val)
       }
       self
    end

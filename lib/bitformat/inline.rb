@@ -263,6 +263,7 @@ module NumericField
       if(_str+%{size} > _str_end)
          rb_raise(rb_eEOFError, "");
       %{label} = *((%{type}*)_str);
+      %{swap}
       v_%{label} = %{convert}(%{label});
       _str += (%{size});
 //----
@@ -272,16 +273,19 @@ module NumericField
       if(%{condition}) {
          if(_str+%{size} > _str_end)
             rb_raise(rb_eEOFError, "");
+         %{swap}
          v_%{label} = %{convert}(%{label});
          _str += (%{size});
       }
 //----
       VALUE v_%{label} = rb_ary_shift(%{ary});
       %{type} %{label} = NUM2INT(v_%{label});
+      %{swap}
       rb_str_cat(%{str}, (char*)&%{label}, %{size});
 //----
       VALUE v_%{label} = rb_ary_shift(%{ary});
       %{type} %{label} = NUM2INT(v_%{label});
+      %{swap}
       if(%{condition}) {
          rb_str_cat(%{str}, (char*)&%{label}, %{size});
       }
@@ -296,6 +300,7 @@ module NumericField
                when Proc then '1'
                when Symbol then '0' #%[RTEST(rb_funcall(v_self, rb_intern("#{ @opt_if }"), 0))] # call method?
             end,
+         swap: @endian == NATIVE ? '' : "#{ label } = (#{ label } << 8) | (#{ label } >> 8 );",
          type: c_type,
          convert: bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
       }
@@ -312,6 +317,7 @@ module NumericField
                when Proc then '1'
                when Symbol then %[RTEST(rb_funcall(v_#{ label }, rb_intern("#{ @opt_if }"), 0))] # call method?
             end,
+         swap: @endian == NATIVE ? '' : "#{ label } = (#{ label } << 8) | (#{ label } >> 8 );",
          type: c_type,
       }
    end
@@ -331,7 +337,7 @@ module NumericField
 end
 
 class BitField
-   C_READ, C_READ_IF, C_WRITE, C_WRITE_IF = <<-C.gsub(/^\s{6}/,'').split(C_SEP)
+   C_READ, C_READ_IF, C_WRITE, C_WRITE_IF, C_SWAP = <<-C.gsub(/^\s{6}/,'').split(C_SEP)
       if(_str+%{size} > _str_end)
          rb_raise(rb_eEOFError, "");
       typedef struct %{label}_s {
@@ -363,24 +369,33 @@ class BitField
          %{body}
          rb_str_cat(%{str}, (char*)&%{label}, %{size});
       }
+//----
+      char *%{label}_str = ((char*)&%{label});
+      char *end = %{label}_str + %{size} - 1;
+      while(%{label}_str < end) {
+         *%{label}_str ^= *end;
+         *end ^= *%{label}_str;
+         *%{label}_str ^= *end;
+         %{label}_str++;
+         end--;
+      }
    C
 
    def c_source(label)
-      bitfields = parent.to_h.to_a[@fields_offset - 1, @fields_num + 1]
       # TODO: condition
       (@opt_if ? C_READ_IF : C_READ) % {
          label: label,
          size: size,
-         type: c_fields,
-         body: bitfields.map do |name, field|
-            convert = field.bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
+         type: c_fields.join("\n"),
+         body: (@endian == NATIVE ? '' : swap(label)) <<
+            fields.map do |name, field|
+               convert = field.bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
                "VALUE v_#{ name } = #{ convert }(#{ label }.#{ name });"
             end.join("\n")
       }
    end
 
    def c_write_source(ary, str, label)
-      bitfields = parent.to_h.to_a[@fields_offset - 1, @fields_num + 1]
       (@opt_if ? C_WRITE_IF : C_WRITE) % {
          label: label,
          str: str,
@@ -389,8 +404,9 @@ class BitField
                when Proc then '1'
                else @opt_if
             end,
-         type: c_fields,
-         body: bitfields.map do |name, field|
+         type: c_fields.join("\n"),
+         body: (@endian == NATIVE ? '' : swap(label)) <<
+            fields.map do |name, field|
                convert = field.bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
                "VALUE v_#{ name } = rb_ary_shift(#{ ary });\n" <<
                "#{ label }.#{ name } = #{ convert }(v_#{ name });"
@@ -398,16 +414,28 @@ class BitField
       }
    end
 
+   def swap(label)
+      C_SWAP % {
+         label: label,
+         size: size,
+      }
+   end
+
    def c_declare(label)
-      "struct { #{ c_fields } } #{ label };"
+      "struct { #{ fields.map do |name, field|
+         "unsigned int #{ name } : #{ field.bits };"
+      end.join("\n") } } #{ label };"
+   end
+
+   def fields
+      # FIXME: Order?!
+      parent.to_h.to_a[@fields_offset - 1, @fields_num + 1]
    end
 
    def c_fields
-      # Order?
-      parent.to_h.to_a[@fields_offset - 1, @fields_num + 1]
-         .map do |name, field|
+      fields.map do |name, field|
          "unsigned int #{ name } : #{ field.bits };"
-      end.join("\n")
+      end
    end
 end
 

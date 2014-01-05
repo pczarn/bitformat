@@ -20,6 +20,7 @@ class String < Field
 
    def initialize(opts={})
       @match = opts[:match] if opts[:match]
+      @size = opts[:size]
       super;
    end
 

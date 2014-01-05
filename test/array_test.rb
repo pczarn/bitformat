@@ -40,8 +40,7 @@ end
 
 class TestArrays < Test::Unit::TestCase
    def test_ary
-      stream = ArrayStream.new
-      stream.read('xy'*10)
+      stream = ArrayStream.read('xy'*10)
       assert_equal 'xy'*10, stream.to_s
 
       ary_block = ArrayBlock.new
