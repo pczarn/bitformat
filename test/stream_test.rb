@@ -113,6 +113,8 @@ class TestStreams < Test::Unit::TestCase
       stream = NestedString.read @packed
 
       assert_equal @id_val, stream.nested.id
+      assert_equal({:id => @id_val},
+         stream.nested.to_h)
       assert_instance_of BitFormat::Stream, stream.nested
    end
 

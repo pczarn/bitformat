@@ -81,7 +81,7 @@ end
 class Stream < Field
    extend Container
 
-   attr_reader :values
+   attr_reader :values, :labels
 
    # Initializes fields.
    # Optionally evaluates a block in the context of a singleton class.
@@ -94,9 +94,12 @@ class Stream < Field
          this_class = singleton_class
          this_class.endian(opts[:endian] || NATIVE)
          this_class.instance_eval(&extension)
+         # Compatibility
+         @labels = this_class.labels
       else
          this_class = self.class
          this_class.endian(opts[:endian] || NATIVE)
+         @labels = this_class.labels
       end
 
       # deep clone
@@ -139,9 +142,11 @@ class Stream < Field
    end
 
    # Returns an array of labels.
-   def labels
-      self.class.labels + self.singleton_class.labels
-   end
+   # def labels
+   #    # Ruby 1.9: clone.singleton_class.labels != singleton_class.labels
+   #    log self.singleton_class, self.class.labels, self.singleton_class.labels
+   #    self.class.labels + self.singleton_class.labels
+   # end
 
    # Returns a binary string that represents the contents.
    def to_s
