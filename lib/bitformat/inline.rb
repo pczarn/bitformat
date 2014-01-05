@@ -58,14 +58,15 @@ module Container
       }
 //----
       VALUE read(VALUE _v_str) {
-         char *_str_pos = RSTRING_PTR(_v_str);
+         if(rb_respond_to(_v_str, rb_intern("read"))) {
+            _v_str = rb_funcall(_v_str, rb_intern("read"), 0);
+         }
          char *_str = RSTRING_PTR(_v_str);
          char *_str_end = _str + RSTRING_LEN(_v_str);
       %s
          VALUE v_self = rb_class_new_instance(0, NULL, self);
          rb_funcall(v_self, rb_intern("assign"), 1, v__self);
-         rb_funcall(v_self, rb_intern("size="), 1, _str - _str_pos);
-         printf("%%u %%u %%u\\n", _str, _str_pos, _str - _str_pos);
+         rb_funcall(v_self, rb_intern("size="), 1, INT2FIX(_str - RSTRING_PTR(_v_str)));
          return(v_self);
       }
 //----
@@ -267,11 +268,13 @@ module NumericField
 //----
       VALUE v_%{label} = Qnil;
       %{type} %{label};
-      if(_str+%{size} > _str_end)
-         rb_raise(rb_eEOFError, "");
       %{label} = *((%{type}*)_str);
-      v_%{label} = %{convert}(%{label});
-      _str += (%{size});
+      if(%{condition}) {
+         if(_str+%{size} > _str_end)
+            rb_raise(rb_eEOFError, "");
+         v_%{label} = %{convert}(%{label});
+         _str += (%{size});
+      }
 //----
       VALUE v_%{label} = rb_ary_shift(%{ary});
       %{type} %{label} = NUM2INT(v_%{label});
@@ -288,6 +291,11 @@ module NumericField
       (@opt_if ? C_READ_IF : C_READ) % {
          label: label,
          size: size,
+         condition: case @opt_if
+               when String then @opt_if
+               when Proc then '1'
+               when Symbol then '0' #%[RTEST(rb_funcall(v_self, rb_intern("#{ @opt_if }"), 0))] # call method?
+            end,
          type: c_type,
          convert: bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
       }
@@ -305,7 +313,6 @@ module NumericField
                when Symbol then %[RTEST(rb_funcall(v_#{ label }, rb_intern("#{ @opt_if }"), 0))] # call method?
             end,
          type: c_type,
-         convert: bits > FIXNUM_BITS ? 'INT2NUM' : 'INT2FIX'
       }
    end
 
