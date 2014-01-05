@@ -2,7 +2,9 @@ source 'https://rubygems.org'
 gemspec
 
 gem "rake"
-gem "RubyInline", :platforms => [:ruby] if ENV['TRAVIS'] # optional
+
+# optional
+gem "RubyInline", :platforms => [:ruby, :rbx] if ENV['TRAVIS']
 
 platform :rbx do
    gem "rubysl"

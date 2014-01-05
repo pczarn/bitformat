@@ -2,13 +2,14 @@ require 'rake/testtask'
 
 task :default => :test
 
-if defined?(RUBY_DESCRIPTION) && RUBY_DESCRIPTION =~ /^ruby/
+if (defined?(RUBY_DESCRIPTION) && RUBY_DESCRIPTION =~ /^jruby/) ||
+      (ENV["RUBY_VERSION"] && ENV["RUBY_VERSION"] =~ /^jruby/)
+   task :test => 'test:test'
+else
    task :test => [
       'test:test',
       'test:inline'
    ]
-else
-   task :test => 'test:test'
 end
 
 namespace :test do
